@@ -1418,8 +1418,47 @@ local function createLibrary(loaderIdentity, displayIdentity)
             else
                 Library:DisableInputChanged();
             end;
-            Library.Elements.Instance.Enabled = visible;
-            Library.Items.Instance.Enabled = visible;
+            local window = Library.Window;
+            local menu = window.Items and window.Items.Menu;
+            local info = TweenInfo.new(
+                Library.TweeningSpeed,
+                Library.EasingStyle,
+                Library.EasingDirection,
+                0,
+                false,
+                0
+            );
+            if menu and menu.Instance then
+                window.Tweening = true;
+                if visible then
+                    -- Enable first, then roll it open from nothing.
+                    local target = window.OpenSize or menu.Instance.Size;
+                    Library.Elements.Instance.Enabled = true;
+                    Library.Items.Instance.Enabled = true;
+                    menu.Instance.Size = newUDim2(target.X.Scale, target.X.Offset, 0, 0);
+                    menu:Tween({
+                        Size = target
+                    }, info).Completed:Wait();
+                else
+                    -- Remember what to roll back out to before flattening it.
+                    window.OpenSize = menu.Instance.Size;
+                    menu:Tween({
+                        Size = newUDim2(
+                            window.OpenSize.X.Scale,
+                            window.OpenSize.X.Offset,
+                            0,
+                            0
+                        )
+                    }, info).Completed:Wait();
+                    Library.Elements.Instance.Enabled = false;
+                    Library.Items.Instance.Enabled = false;
+                    menu.Instance.Size = window.OpenSize;
+                end;
+                window.Tweening = false;
+            else
+                Library.Elements.Instance.Enabled = visible;
+                Library.Items.Instance.Enabled = visible;
+            end;
             Library.Window.Open = visible;
         end;
         Library.EnableInputChanged = function(self)
@@ -4798,10 +4837,8 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     PaddingTop = UDim.new(0, - 3.0),
                     Parent = items.SearchInput.Instance
                 });
-                -- Minimise. Sits in RightHolder beside the search box, which is
-                -- a horizontal list layout, so it lines itself up. Hiding the
-                -- window hides this with it -- the menu keybind is what brings
-                -- both back.
+                -- Minimise, beside the search box. RightHolder is a horizontal
+                -- list layout, so it lines itself up without a position.
                 items.MinimiseButton = Library:Create("TextButton", {
                     Active = true,
                     Parent = items.RightHolder.Instance,
@@ -4828,9 +4865,90 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     BorderSizePixel = 0,
                     BackgroundColor3 = themeRegistry.Preset.TextColor
                 }):Themify("TextColor", "BackgroundColor3");
-                items.MinimiseButton.Instance.MouseButton1Click:Connect(function()
-                    Library:SetMenuVisible(false);
-                end);
+                -- Upright half of a plus. Hidden while open, shown once
+                -- collapsed, so the one button reads as restore.
+                items.MinimiseIconUp = Library:Create("Frame", {
+                    Parent = items.MinimiseButton.Instance,
+                    AnchorPoint = newVector2(0.5, 0.5),
+                    Position = UDim2.fromScale(0.5, 0.5),
+                    Size = newUDim2(0, 2, 0, 13),
+                    Visible = false,
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = themeRegistry.Preset.TextColor
+                }):Themify("TextColor", "BackgroundColor3");
+                do
+                    -- Collapse down to the Topbar rather than hiding the
+                    -- window. Topbar is a 51px child of Menu at y = 0, so
+                    -- shrinking Menu to 51 leaves exactly the title strip, the
+                    -- search box and this button on screen.
+                    --
+                    -- Easing is passed explicitly rather than left to the
+                    -- Tween default, so the collapse matches the rest of the UI
+                    -- whatever a caller has done to Library.TweeningSpeed.
+                    local menu = items.Menu;
+                    local titleHeight = 51;
+                    local openSize = window.Size;
+                    local openClipping = menu.Instance.ClipsDescendants;
+                    local busy = false;
+
+                    window.Minimised = false;
+
+                    local function collapseInfo()
+                        return TweenInfo.new(
+                            Library.TweeningSpeed,
+                            Library.EasingStyle,
+                            Library.EasingDirection,
+                            0,
+                            false,
+                            0
+                        );
+                    end;
+
+                    local function setCollapsed(collapsed)
+                        if busy then
+                            return;
+                        end;
+
+                        busy = true;
+                        window.Minimised = collapsed;
+
+                        if collapsed then
+                            -- Remember the size it was actually at, so dragging
+                            -- or resizing beforehand is preserved.
+                            openSize = menu.Instance.Size;
+                            menu.Instance.ClipsDescendants = true;
+
+                            items.MinimiseIconUp.Instance.Visible = true;
+                            items.Searchbar.Instance.Visible = false;
+
+                            menu:Tween({
+                                Size = newUDim2(
+                                    openSize.X.Scale,
+                                    openSize.X.Offset,
+                                    0,
+                                    titleHeight
+                                )
+                            }, collapseInfo()).Completed:Wait();
+                        else
+                            items.MinimiseIconUp.Instance.Visible = false;
+                            items.Searchbar.Instance.Visible = true;
+
+                            menu:Tween({
+                                Size = openSize
+                            }, collapseInfo()).Completed:Wait();
+
+                            menu.Instance.ClipsDescendants = openClipping;
+                        end;
+
+                        busy = false;
+                    end;
+
+                    window.SetCollapsed = setCollapsed;
+
+                    items.MinimiseButton.Instance.MouseButton1Click:Connect(function()
+                        setCollapsed(not window.Minimised);
+                    end);
+                end;
                 items.Sidebar = Library:Create("Frame", {
                     Parent = items.Menu.Instance,
                     Position = newUDim2(0, 0, 0, 51),
