@@ -1430,6 +1430,12 @@ local function createLibrary(loaderIdentity, displayIdentity)
             );
             if menu and menu.Instance then
                 window.Tweening = true;
+                -- Menu does not clip by default, so its contents carry on
+                -- drawing at full size while the frame shrinks -- the window
+                -- looks intact right up to the moment it blinks out. Clipping
+                -- for the duration is what makes it actually roll away.
+                local wasClipping = menu.Instance.ClipsDescendants;
+                menu.Instance.ClipsDescendants = true;
                 if visible then
                     -- Enable first, then roll it open from nothing.
                     local target = window.OpenSize or menu.Instance.Size;
@@ -1454,6 +1460,9 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     Library.Items.Instance.Enabled = false;
                     menu.Instance.Size = window.OpenSize;
                 end;
+                -- Collapsed windows keep clipping; open ones go back to
+                -- whatever they had before.
+                menu.Instance.ClipsDescendants = window.Minimised and true or wasClipping;
                 window.Tweening = false;
             else
                 Library.Elements.Instance.Enabled = visible;
