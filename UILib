@@ -4921,13 +4921,22 @@ local function createLibrary(loaderIdentity, displayIdentity)
                             items.MinimiseIconUp.Instance.Visible = true;
                             items.Searchbar.Instance.Visible = false;
 
+                            -- How much width to keep: the icon, title and
+                            -- version on the left, plus room for the button on
+                            -- the right. Measured off the rendered header so a
+                            -- longer title still fits, and never wider than the
+                            -- window already is.
+                            local left = items.LeftHolder.Instance;
+                            local collapsedWidth = math.clamp(
+                                left.AbsoluteSize.X + 96,
+                                220,
+                                math.max(openSize.X.Offset, 220)
+                            );
+
+                            -- Both axes at once, so it travels diagonally in to
+                            -- its top-left corner rather than straight up.
                             menu:Tween({
-                                Size = newUDim2(
-                                    openSize.X.Scale,
-                                    openSize.X.Offset,
-                                    0,
-                                    titleHeight
-                                )
+                                Size = newUDim2(0, collapsedWidth, 0, titleHeight)
                             }, collapseInfo()).Completed:Wait();
                         else
                             items.MinimiseIconUp.Instance.Visible = false;
