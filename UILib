@@ -4798,6 +4798,39 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     PaddingTop = UDim.new(0, - 3.0),
                     Parent = items.SearchInput.Instance
                 });
+                -- Minimise. Sits in RightHolder beside the search box, which is
+                -- a horizontal list layout, so it lines itself up. Hiding the
+                -- window hides this with it -- the menu keybind is what brings
+                -- both back.
+                items.MinimiseButton = Library:Create("TextButton", {
+                    Active = true,
+                    Parent = items.RightHolder.Instance,
+                    Size = newUDim2(0, 33, 0, 33),
+                    BorderSizePixel = 0,
+                    AutoButtonColor = false,
+                    Text = "",
+                    BackgroundColor3 = themeRegistry.Preset.Background
+                }):Themify("Background", "BackgroundColor3");
+                items.MinimiseCorner = Library:Create("UICorner", {
+                    Parent = items.MinimiseButton.Instance,
+                    CornerRadius = UDim.new(0, 6)
+                });
+                items.MinimiseStroke = Library:Create("UIStroke", {
+                    Color = themeRegistry.Preset.Inline,
+                    BorderOffset = UDim.new(0, - 1.0),
+                    Parent = items.MinimiseButton.Instance
+                }):Themify("Inline", "Color");
+                items.MinimiseIcon = Library:Create("Frame", {
+                    Parent = items.MinimiseButton.Instance,
+                    AnchorPoint = newVector2(0.5, 0.5),
+                    Position = UDim2.fromScale(0.5, 0.5),
+                    Size = newUDim2(0, 13, 0, 2),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = themeRegistry.Preset.TextColor
+                }):Themify("TextColor", "BackgroundColor3");
+                items.MinimiseButton.Instance.MouseButton1Click:Connect(function()
+                    Library:SetMenuVisible(false);
+                end);
                 items.Sidebar = Library:Create("Frame", {
                     Parent = items.Menu.Instance,
                     Position = newUDim2(0, 0, 0, 51),
@@ -5803,111 +5836,6 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 items.Fps.Instance.Text = string.format("%s fps", E);
                 items.Time.Instance.Text = os.date("%H:%M:%S");
             end);
-            do
-                -- Minimise button.
-                --
-                -- Its own ScreenGui on purpose: SetMenuVisible disables
-                -- Library.Elements and Library.Items, so a button parented to
-                -- either would disappear along with the window and leave no way
-                -- to bring it back.
-                --
-                -- Tap toggles, drag moves. The drag threshold is what separates
-                -- the two, so a sloppy tap on a phone still counts as a tap.
-                local ok = pcall(function()
-                    local gui = Instance.new("ScreenGui");
-                    gui.Name = "\0";
-                    gui.ResetOnSpawn = false;
-                    gui.IgnoreGuiInset = true;
-                    gui.DisplayOrder = 999999;
-                    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling;
-                    gui.Parent = (gethui and gethui()) or Services.CoreGui;
-
-                    local button = Instance.new("TextButton");
-                    button.Name = "\0";
-                    button.Size = UDim2.fromOffset(44, 44);
-                    button.Position = UDim2.new(0, 16, 0, 140);
-                    button.BackgroundColor3 = themeRegistry.Preset.PageBackground;
-                    button.BorderSizePixel = 0;
-                    button.AutoButtonColor = false;
-                    button.Active = true;
-                    button.Text = "V";
-                    button.TextColor3 = themeRegistry.Preset.TextColor;
-                    button.TextSize = 20;
-                    button.Font = Enum.Font.GothamBold;
-                    button.Parent = gui;
-
-                    local corner = Instance.new("UICorner");
-                    corner.CornerRadius = UDim.new(0, 10);
-                    corner.Parent = button;
-
-                    local stroke = Instance.new("UIStroke");
-                    stroke.Color = themeRegistry.Preset.Accent;
-                    stroke.Thickness = 1;
-                    stroke.Parent = button;
-
-                    window.MinimiseButton = button;
-                    window.MinimiseGui = gui;
-
-                    -- Destroyed with everything else on Unload.
-                    table.insert(Library.Bin, gui);
-
-                    local dragging, dragFrom, dragOrigin, moved = false, nil, nil, 0;
-
-                    local function toggle()
-                        Library:SetMenuVisible(not Library.Window.Open);
-                        button.Text = Library.Window.Open and "V" or "+";
-                    end;
-
-                    button.InputBegan:Connect(function(input)
-                        if input.UserInputType ~= Enum.UserInputType.MouseButton1
-                            and input.UserInputType ~= Enum.UserInputType.Touch then
-                            return;
-                        end;
-
-                        dragging = true;
-                        moved = 0;
-                        dragFrom = input.Position;
-                        dragOrigin = button.Position;
-                    end);
-
-                    Services.UserInputService.InputChanged:Connect(function(input)
-                        if not dragging then return end;
-
-                        if input.UserInputType ~= Enum.UserInputType.MouseMovement
-                            and input.UserInputType ~= Enum.UserInputType.Touch then
-                            return;
-                        end;
-
-                        local delta = input.Position - dragFrom;
-                        moved = math.max(moved, math.abs(delta.X) + math.abs(delta.Y));
-
-                        button.Position = UDim2.new(
-                            dragOrigin.X.Scale, dragOrigin.X.Offset + delta.X,
-                            dragOrigin.Y.Scale, dragOrigin.Y.Offset + delta.Y);
-                    end);
-
-                    Services.UserInputService.InputEnded:Connect(function(input)
-                        if not dragging then return end;
-
-                        if input.UserInputType ~= Enum.UserInputType.MouseButton1
-                            and input.UserInputType ~= Enum.UserInputType.Touch then
-                            return;
-                        end;
-
-                        dragging = false;
-
-                        -- Barely moved, so it was a tap rather than a drag.
-                        if moved <= 6 then
-                            toggle();
-                        end;
-                    end);
-                end);
-
-                if not ok then
-                    warn("[Library] minimise button could not be created");
-                end;
-            end;
-
             return setmetatable(window, Library);
         end;
         Library.AddTab = function(self, options)
