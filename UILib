@@ -319,11 +319,16 @@ local function createLibrary(loaderIdentity, displayIdentity)
         writefile(Library.Directory .. "/Configs.txt", Services.HttpService:JSONEncode(Library.Configs));
     end;
     local flagValues = {};
+    local flagObjects = {};
     local Flags = {};
     do
         Flags = setmetatable({}, {
             __index = function(_, flagName)
-                return{
+                local cached = flagObjects[flagName];
+                if cached then
+                    return cached;
+                end;
+                local accessor = {
                     Get = function()
                         return flagValues[flagName];
                     end,
@@ -343,6 +348,8 @@ local function createLibrary(loaderIdentity, displayIdentity)
                         table.insert(Library.Listeners[flagName], callback);
                     end
                 };
+                flagObjects[flagName] = accessor;
+                return accessor;
             end,
             __newindex = function(_, flagName, value)
                 local previousValue = flagValues[flagName];
@@ -889,7 +896,8 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 if self == nil then
                     return;
                 end;
-                local _ml = Services.UserInputService:GetMouseLocation();
+                local mousePosition = Services.UserInputService:GetMouseLocation();
+                local _ml = Vector2.new(mousePosition.X, mousePosition.Y - guiInsetY);
                 local c = self.Instance.AbsolutePosition.Y <= _ml.Y and _ml.Y <= self.Instance.AbsolutePosition.Y + self.Instance.AbsoluteSize.Y;
                 local M = self.Instance.AbsolutePosition.X <= _ml.X and _ml.X <= self.Instance.AbsolutePosition.X + self.Instance.AbsoluteSize.X;
                 return c and M;
@@ -2940,7 +2948,7 @@ local function createLibrary(loaderIdentity, displayIdentity)
         Library.RefreshDropdown = function(self, values)
             local items = self.Items;
             for key, value in self.OptionInstances do
-                value.Holder.Instance:Destroy();
+                value.Value.Instance:Destroy();
             end;
             self.OptionInstances = {};
             for key, value in values do
@@ -3620,7 +3628,7 @@ local function createLibrary(loaderIdentity, displayIdentity)
             Enabled = true,
             ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
             IgnoreGuiInset = true,
-            DisplayOrder = 4
+            DisplayOrder = 10
         });
         Library.CreateLoader = function(self, options)
             options = options or {};
@@ -5175,7 +5183,8 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     GroupTransparency = 1,
                     Parent = Library.HUD.Instance,
                     BackgroundTransparency = 0.9900000095367432,
-                    Position = newUDim2(0, 30, 0, 30),
+                    AnchorPoint = newVector2(0.5, 0),
+                    Position = newUDim2(0, camera.ViewportSize.X / 2, 0, 12),
                     BorderSizePixel = 0,
                     AutomaticSize = Enum.AutomaticSize.XY
                 }):Draggify("HUD_Watermark_Position", true);
@@ -5257,39 +5266,6 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     Padding = UDim.new(0, 6),
                     ItemLineAlignment = Enum.ItemLineAlignment.Center,
                     SortOrder = Enum.SortOrder.LayoutOrder
-                });
-                items.ProfileImage = Library:Create("ImageLabel", {
-                    ImageColor3 = themeRegistry.Preset.Accent,
-                    Parent = items.WatermarkInfo.Instance,
-                    Image = "rbxassetid://93235206575148",
-                    BackgroundTransparency = 1,
-                    Size = newUDim2(0, 24, 0, 24),
-                    BorderSizePixel = 0,
-                    BackgroundColor3 = themeRegistry.Preset.Accent
-                }):Themify("Accent", "ImageColor3");
-                items.Name = Library:Create("TextLabel", {
-                    TextColor3 = Color3.fromRGB(255, 255, 255),
-                    Text = "poopcock",
-                    Parent = items.WatermarkInfo.Instance,
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.XY
-                });
-                items.UIPadding = Library:Create("UIPadding", {
-                    PaddingBottom = UDim.new(0, 1),
-                    Parent = items.Name.Instance
-                });
-                items.Seperator = Library:Create("TextLabel", {
-                    TextColor3 = themeRegistry.Preset.TextColor,
-                    Text = "|",
-                    Parent = items.WatermarkInfo.Instance,
-                    BackgroundTransparency = 1,
-                    BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.XY
-                }):Themify("TextColor", "TextColor3");
-                items.UIPadding = Library:Create("UIPadding", {
-                    PaddingBottom = UDim.new(0, 1),
-                    Parent = items.Seperator.Instance
                 });
                 items.UIPadding = Library:Create("UIPadding", {
                     PaddingTop = UDim.new(0, 5),
@@ -5952,16 +5928,9 @@ local function createLibrary(loaderIdentity, displayIdentity)
             end;
             local E = 0;
             local timestamp = tick();
-            items.Name.Instance.Text = "Developer";
-            do
-                items.Name.Instance.Text = displayIdentity[2][displayIdentity[1]];
-            end;
             Library:Connect(Services.RunService.RenderStepped, function(w)
-                if not Flags["Refresh Rate"]:Get() then
-                    return;
-                end;
                 Tick = tick();
-                if not (Tick - timestamp >= Flags["Refresh Rate"]:Get()) then
+                if not (Tick - timestamp >= 0.5) then
                     return;
                 end;
                 timestamp = Tick;
@@ -6202,7 +6171,6 @@ local function createLibrary(loaderIdentity, displayIdentity)
             Library:Connect(mouse.Items.Elements.ChildAdded, function(w)
                 repeat
                     task.wait();
-                    print("getting elements");
                 until w.AbsoluteSize;
                 section.Tweening = true;
                 section.Max += (w.AbsoluteSize.Y + mouse.Padding.Offset);
@@ -7037,9 +7005,10 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 items.Arrow:Tween({
                     Rotation = dropdown.Open and 180 or 0
                 });
-                items.DropdownHolder.Instance.Position = UDim2.new(0, instance.AbsolutePosition.X + 2, 0, instance.AbsolutePosition.Y + 100);
+                local B = instance.AbsolutePosition.Y + instance.AbsoluteSize.Y + guiInsetY + 6;
+                items.DropdownHolder.Instance.Position = UDim2.new(0, instance.AbsolutePosition.X + 2, 0, B);
                 items.DropdownHolder:Tween({
-                    Position = UDim2.new(0, instance.AbsolutePosition.X, 0, instance.AbsolutePosition.Y + 100)
+                    Position = UDim2.new(0, instance.AbsolutePosition.X, 0, B)
                 });
                 items.DropdownHolder.Instance.Size = UDim2.fromOffset(E + 1, items.DropdownHolder.Instance.AbsoluteSize.Y);
                 items.DropdownHolder:TweenDescendants(dropdown.Open, dropdown);
@@ -7205,7 +7174,7 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 Key = options.Key or options.Default or nil,
                 Mode = options.Mode or "Toggle",
                 Active = options.Active or false,
-                ShowInList = options.ShowInList or false,
+                ShowInList = options.ShowInList ~= false,
                 Open = false,
                 Tweening = false,
                 Binding = false,
@@ -7232,69 +7201,20 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 items.ComponentsHolder = self.Items.ComponentsHolder;
                 items.Right = self.Items.Row and self.Items.Right or items.Right;
                 items.Left.Instance.Size = UDim2.new(0, 0, 1, 0);
-                items.Outline = Library:Create("TextButton", {
+                items.Outline = Library:Create("ImageButton", {
+                    ImageColor3 = themeRegistry.Preset.TextColor,
                     Parent = items.Right.Instance,
-                    Size = newUDim2(0, 83, 0, 25),
-                    BorderSizePixel = 0,
-                    BackgroundColor3 = themeRegistry.Preset.ElementBackground
-                }):Themify("ElementBackground", "BackgroundColor3");
-                items.Holder = Library:Create("Frame", {
-                    AnchorPoint = newVector2(0, 0.5),
-                    Parent = items.Outline.Instance,
+                    Image = "rbxassetid://106205298246017",
                     BackgroundTransparency = 1,
-                    Position = newUDim2(0, 0, 0.5, 0),
-                    BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.XY
-                });
-                items.UIPadding = Library:Create("UIPadding", {
-                    Parent = items.Holder.Instance,
-                    PaddingRight = UDim.new(0, 9),
-                    PaddingLeft = UDim.new(0, 10)
-                });
-                items.Keyboard = Library:Create("ImageLabel", {
-                    ImageColor3 = themeRegistry.Preset.Accent,
-                    Parent = items.Holder.Instance,
-                    AnchorPoint = newVector2(0, 0.5),
-                    Image = "rbxassetid://72948106080078",
-                    BackgroundTransparency = 1,
-                    Position = newUDim2(0, 10, 0.5, 0),
-                    Size = newUDim2(0, 18, 0, 18),
+                    Size = newUDim2(0, 16, 0, 16),
                     BorderSizePixel = 0
-                }):Themify("Accent", "ImageColor3");
-                items.UIListLayout = Library:Create("UIListLayout", {
-                    VerticalAlignment = Enum.VerticalAlignment.Center,
-                    FillDirection = Enum.FillDirection.Horizontal,
-                    Parent = items.Holder.Instance,
-                    Padding = UDim.new(0, 8),
-                    SortOrder = Enum.SortOrder.LayoutOrder
-                });
-                items.Value = Library:Create("TextLabel", {
-                    ClipsDescendants = true,
-                    TextColor3 = Color3.fromRGB(255, 255, 255),
-                    Text = "",
-                    Parent = items.Holder.Instance,
-                    AnchorPoint = newVector2(0, 0.5),
-                    Position = newUDim2(0, 0, 0.5, 0),
-                    BackgroundTransparency = 1,
-                    TextXAlignment = Enum.TextXAlignment.Left,
-                    BorderSizePixel = 0,
-                    AutomaticSize = Enum.AutomaticSize.XY
-                });
-                items.UICorner = Library:Create("UICorner", {
-                    Parent = items.Outline.Instance,
-                    CornerRadius = UDim.new(0, 5)
-                });
+                }):Themify("TextColor", "ImageColor3");
                 items.UIListLayout2 = Library:Create("UIListLayout", {
                     VerticalAlignment = Enum.VerticalAlignment.Center,
                     Padding = UDim.new(0, 8),
                     Parent = items.Right.Instance,
                     SortOrder = Enum.SortOrder.LayoutOrder
                 });
-                items.Holder:OnPropertyChange("AbsoluteSize", function()
-                    items.Outline:Tween({
-                        Size = UDim2.new(0, items.Holder.Instance.AbsoluteSize.X, 0, 25)
-                    });
-                end);
                 items.Settings = Library:Create("Frame", {
                     Visible = false,
                     Parent = Library.Other.Instance,
@@ -7316,6 +7236,34 @@ local function createLibrary(loaderIdentity, displayIdentity)
                     Size = UDim2.new(1, - 24.0, 0, 0),
                     Position = UDim2.new(0, 12, 0, 12)
                 });
+                items.KeyRow = items.Elements.Items.Elements:AddObject({
+                    Components = false,
+                    Text = "Key"
+                }).Items;
+                items.KeyButton = Library:Create("TextButton", {
+                    Parent = items.KeyRow.Right.Instance,
+                    AutoButtonColor = false,
+                    Text = "",
+                    Size = newUDim2(0, 76, 0, 28),
+                    BorderSizePixel = 0,
+                    BackgroundColor3 = themeRegistry.Preset.ElementBackground
+                }):Themify("ElementBackground", "BackgroundColor3");
+                items.UICorner3 = Library:Create("UICorner", {
+                    Parent = items.KeyButton.Instance,
+                    CornerRadius = UDim.new(0, 5)
+                });
+                items.Value = Library:Create("TextLabel", {
+                    ClipsDescendants = true,
+                    TextColor3 = Color3.fromRGB(255, 255, 255),
+                    Text = "",
+                    Parent = items.KeyButton.Instance,
+                    Size = newUDim2(1, 0, 1, 0),
+                    BackgroundTransparency = 1,
+                    BorderSizePixel = 0
+                });
+                items.KeyButton:OnClick(function()
+                    w:NewKey();
+                end);
                 items.Elements:AddToggle({
                     Text = "Show in list",
                     Default = keyPicker.ShowInList,
@@ -7343,6 +7291,9 @@ local function createLibrary(loaderIdentity, displayIdentity)
                         end;
                     end
                 });
+                table.insert(items.Elements.DataElements, function()
+                    return items.Outline:Hovering();
+                end);
                 items.Settings:OutsideClick(keyPicker, items.Elements.DataElements);
             end;
             keyPicker.Set = function(G)
@@ -7414,12 +7365,9 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 });
             end;
             keyPicker.IsHovering = function()
-                return items.Modepicker and items.Modepicker:Hovering();
+                return items.Outline:Hovering();
             end;
             items.Outline:OnClick(function()
-                w:NewKey();
-            end);
-            items.Outline:OnRightClick(function()
                 if keyPicker.Tweening then
                     return;
                 end;
@@ -8153,12 +8101,10 @@ local function createLibrary(loaderIdentity, displayIdentity)
                 local a = Instance.new("Animation", X);
                 local g = X.Humanoid;
                 a.AnimationId = "rbxassetid://10976840199";
-                print("loaded animation");
                 X.HumanoidRootPart.Anchored = false;
                 E.Animation = g:LoadAnimation(a);
                 E.Animation.Priority = Enum.AnimationPriority.Action;
                 E.Animation:Play();
-                print(E.Animation.Length);
             end;
             E.Sandbox = function()
                 for X, a in E.Parts do
@@ -8488,15 +8434,6 @@ local function createLibrary(loaderIdentity, displayIdentity)
                         Default = true,
                         Callback = self.SetWatermarkVisibility,
                         Flag = "Watermark"
-                    });
-                    H:AddSlider({
-                        Text = "Refresh Rate",
-                        Flag = "Refresh Rate",
-                        Min = 0,
-                        Max = 2,
-                        Default = 0.5,
-                        Suffix = "s",
-                        Decimal = 0.01
                     });
                     H:AddToggle({
                         Text = "Keybind List",
