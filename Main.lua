@@ -35,43 +35,4 @@ getfenv().script_key = key
 if getgenv then getgenv().script_key = key end
 pcall(writefile, KeyFile, key)
 
-do
-    local queue = queue_on_teleport
-        or (syn and syn.queue_on_teleport)
-        or (fluxus and fluxus.queue_on_teleport)
-        or queueonteleport
-
-    if type(queue) == "function" then
-        local payload = ([[
-            getgenv().script_key = %q
-            task.spawn(function()
-                local ok, src = pcall(function()
-                    return game:HttpGet("https://raw.githubusercontent.com/sxpreme557-lgtm/VaelithHub/refs/heads/main/Main.lua")
-                end)
-                if ok and src then
-                    local fn = loadstring(src)
-                    if fn then fn() end
-                end
-            end)
-        ]]):format(key)
-
-        local queued = false
-        local function enqueue()
-            if queued then return end
-            queued = true
-            pcall(queue, payload)
-        end
-
-        pcall(function()
-            LocalPlayer.OnTeleport:Connect(function(state)
-                if state == Enum.TeleportState.Started
-                    or state == Enum.TeleportState.InProgress then
-                    enqueue()
-                end
-            end)
-        end)
-        enqueue()
-    end
-end
-
 loadstring(game:HttpGet(url))()
