@@ -7,6 +7,7 @@ local Games = {
     [7529591378] = "https://api.luarmor.net/files/v4/loaders/520372631b964c13d92eedd3a98b215a.lua", -- Practical Basketball
     [9112256336] = "https://api.luarmor.net/files/v4/loaders/a79cf5f3e3fcd1588358da007c67f6f4.lua", -- vice city 2
     [10648640958] = "https://api.luarmor.net/files/v4/loaders/a69f8978f9cf23657fec23d16be33fca.lua", -- hood rivals
+    [7586521365] = "https://api.luarmor.net/files/v4/loaders/407deee424806c74b7c74828ab179029.lua". -- atlanta trenches
 }
 
 local Players     = game:GetService("Players")
