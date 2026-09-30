@@ -8,6 +8,7 @@ local Games = {
     [9112256336] = "https://api.luarmor.net/files/v4/loaders/a79cf5f3e3fcd1588358da007c67f6f4.lua", -- vice city 2
     [10648640958] = "https://api.luarmor.net/files/v4/loaders/a69f8978f9cf23657fec23d16be33fca.lua", -- hood rivals
     [7586521365] = "https://api.luarmor.net/files/v4/loaders/407deee424806c74b7c74828ab179029.lua", -- atlanta trenches
+    [7633926880] = "https://api.luarmor.net/files/v4/loaders/766a52f4c3ba5aac494064881ca5ff95.lua", -- bloxstrike
 }
 
 local Players     = game:GetService("Players")
