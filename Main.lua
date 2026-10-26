@@ -10,6 +10,7 @@ local Games = {
     [7586521365] = "https://api.luarmor.net/files/v4/loaders/407deee424806c74b7c74828ab179029.lua", -- atlanta trenches
     [7633926880] = "https://api.luarmor.net/files/v4/loaders/766a52f4c3ba5aac494064881ca5ff95.lua", -- bloxstrike
     [6726637224] = "https://api.luarmor.net/files/v4/loaders/b3e039f1101cfbb6c0b936725b69db68.lua", -- slr
+    [6858584271] = "https://api.luarmor.net/files/v4/loaders/158bb85083d52b8d1d20834fba212573.lua", -- ps2
 }
 
 local Players     = game:GetService("Players")
