@@ -4,7 +4,6 @@ local Games = {
     [8795154789] = "https://api.luarmor.net/files/v4/loaders/236a11d1dbc745e83c8bcabaad8e0691.lua", -- Flick
     [8856451375] = "https://api.luarmor.net/files/v4/loaders/2d9b73b84a025f1d4ea7ba7fe06a4687.lua", -- Fluxo PVP
     [6035872082] = "https://api.luarmor.net/files/v4/loaders/836b5663e68a5431125520ac530bd150.lua", -- Rivals
-    [7529591378] = "https://api.luarmor.net/files/v4/loaders/520372631b964c13d92eedd3a98b215a.lua", -- Practical Basketball
     [9112256336] = "https://api.luarmor.net/files/v4/loaders/a79cf5f3e3fcd1588358da007c67f6f4.lua", -- vice city 2
     [10648640958] = "https://api.luarmor.net/files/v4/loaders/a69f8978f9cf23657fec23d16be33fca.lua", -- hood rivals
     [7586521365] = "https://api.luarmor.net/files/v4/loaders/407deee424806c74b7c74828ab179029.lua", -- atlanta trenches
@@ -12,6 +11,7 @@ local Games = {
     [6726637224] = "https://api.luarmor.net/files/v4/loaders/b3e039f1101cfbb6c0b936725b69db68.lua", -- slr
     [6858584271] = "https://api.luarmor.net/files/v4/loaders/158bb85083d52b8d1d20834fba212573.lua", -- ps2
     [10769552054] = "https://api.luarmor.net/files/v4/loaders/c8da1fab8b4815e568e38f9f01723665.lua", -- urban reload
+    [7529591378] = "https://api.luarmor.net/files/v4/loaders/c8da1fab8b4815e568e38f9f01723665.lua", -- practical bb
 }
 
 local Players     = game:GetService("Players")
