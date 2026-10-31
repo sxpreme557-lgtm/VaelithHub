@@ -11,7 +11,7 @@ local Games = {
     [6726637224] = "https://api.luarmor.net/files/v4/loaders/b3e039f1101cfbb6c0b936725b69db68.lua", -- slr
     [6858584271] = "https://api.luarmor.net/files/v4/loaders/158bb85083d52b8d1d20834fba212573.lua", -- ps2
     [10769552054] = "https://api.luarmor.net/files/v4/loaders/c8da1fab8b4815e568e38f9f01723665.lua", -- urban reload
-    [7529591378] = "https://api.luarmor.net/files/v4/loaders/c8da1fab8b4815e568e38f9f01723665.lua", -- practical bb
+    [7529591378] = "https://api.luarmor.net/files/v4/loaders/a00d016a732d1b0e4d17d503889ba57f.lua", -- practical bb
 }
 
 local Players     = game:GetService("Players")
