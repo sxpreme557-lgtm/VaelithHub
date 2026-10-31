@@ -12,6 +12,7 @@ local Games = {
     [6858584271] = "https://api.luarmor.net/files/v4/loaders/158bb85083d52b8d1d20834fba212573.lua", -- ps2
     [10769552054] = "https://api.luarmor.net/files/v4/loaders/c8da1fab8b4815e568e38f9f01723665.lua", -- urban reload
     [7529591378] = "https://api.luarmor.net/files/v4/loaders/a00d016a732d1b0e4d17d503889ba57f.lua", -- practical bb
+    [10764627709] = "https://api.luarmor.net/files/v4/loaders/8a653f024b21ea0f160e1346a345e2ef.lua", -- huss valley
 }
 
 local Players     = game:GetService("Players")
